@@ -7,4 +7,10 @@ wheels/
 *.egg-info
 
 # venv
-.venv
+.venv/
+
+# Bot settings
+bot_settings.toml
+
+# Ruff cache
+.ruff_cache/

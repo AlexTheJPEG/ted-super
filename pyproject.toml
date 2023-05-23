@@ -15,5 +15,6 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
+dev-dependencies = ["ruff~=0.0.269", "black~=23.3.0"]
 [tool.hatch.metadata]
 allow-direct-references = true
