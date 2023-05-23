@@ -10,9 +10,10 @@ async def on_ready() -> None:
     print_splash()
 
 
-@bot.slash_command()
-async def hello(ctx: discord.ApplicationContext) -> None:
-    await ctx.respond("hello")
-
+cogs_list = (
+    "ping",
+)
+for cog in cogs_list:
+    bot.load_extension(f"ted_cogs.{cog}")
 
 bot.run(settings["bot"]["token"])
