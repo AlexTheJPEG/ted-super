@@ -12,6 +12,7 @@ async def on_ready() -> None:
 
 cogs_list = (
     "ping",
+    "rps",
 )
 for cog in cogs_list:
     bot.load_extension(f"ted_cogs.{cog}")
