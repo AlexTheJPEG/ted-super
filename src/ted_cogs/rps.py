@@ -87,7 +87,13 @@ class RPS(commands.Cog):
         description="Who you want to play against",
         required=True,
     )
-    async def rps(self, ctx: discord.ApplicationContext, opponent: discord.Member) -> None:
+    @discord.option(
+        "replay_after_draw",
+        description="Whether another game starts automatically after a draw",
+        required=False,
+        default=True,
+    )
+    async def rps(self, ctx: discord.ApplicationContext, opponent: discord.Member, replay_after_draw: bool) -> None:
         # Match request flow
         if opponent == ctx.author:
             await ctx.respond("You can't challenge yourself!", ephemeral=True)
@@ -96,7 +102,9 @@ class RPS(commands.Cog):
         rps_request = RPSRequestView(opponent, timeout=30, disable_on_timeout=True)
         await ctx.respond(
             f"{opponent.mention}, you have been challenged to a rock-paper-scissors match"
-            f" by {ctx.author.mention}! Do you accept?\n\nYou have 30 seconds to respond.",
+            f" by {ctx.author.mention}! "
+            f"{'(replay after draw is off) ' if not replay_after_draw else ''}"
+            "Do you accept?\n\nYou have 30 seconds to respond.",
             view=rps_request,
         )
         await rps_request.wait()
@@ -110,73 +118,94 @@ class RPS(commands.Cog):
                 return
 
         # Game flow
-        player_select = RPSSelectView(ctx.author, timeout=30, disable_on_timeout=True)
-        await ctx.respond(
-            f"{ctx.author.mention} Pick your move! You have 30 seconds.",
-            view=player_select,
-        )
-        await player_select.wait()
-        if player_select.move is None:
-            await ctx.respond(
-                f"{ctx.author.mention} took too long to make a move. {opponent.mention} wins by default!"
-            )
-            return
+        game_is_a_draw = True
 
-        opponent_select = RPSSelectView(opponent, timeout=30, disable_on_timeout=True)
-        await ctx.respond(
-            f"{ctx.author.mention} Pick your move! You have 30 seconds.",
-            view=opponent_select,
-        )
-        await opponent_select.wait()
-        if opponent_select.move is None:
+        while game_is_a_draw:
+            # Player selects move
+            player_select = RPSSelectView(ctx.author, timeout=30, disable_on_timeout=True)
             await ctx.respond(
-                f"{opponent.mention} took too long to make a move. {ctx.author.mention} wins by default!"
+                f"{ctx.author.mention} Pick your move! You have 30 seconds.",
+                view=player_select,
             )
-            return
-        
-        game_string = f"{ctx.author.mention} {opponent.mention} Rock, paper, scissors, shoot!"
-        game_message = await ctx.respond(game_string)
-        
-        await asyncio.sleep(2)
+            await player_select.wait()
+            if player_select.move is None:
+                await ctx.respond(
+                    f"{ctx.author.mention} took too long to make a move. {opponent.mention} wins by default!"
+                )
+                return
 
-        game_string += f"\n\n{ctx.author.mention} "
-        match player_select.move:
-            case RPSMove.ROCK:
-                game_string += "🪨   "
-            case RPSMove.PAPER:
-                game_string += "📜   "
-            case RPSMove.SCISSORS:
-                game_string += "✂️   "
-        match opponent_select.move:
-            case RPSMove.ROCK:
-                game_string += "🪨 "
-            case RPSMove.PAPER:
-                game_string += "📜 "
-            case RPSMove.SCISSORS:
-                game_string += "✂️ "
-        game_string += f"{opponent.mention}\n\n"
-        
-        match (player_select.move, opponent_select.move):
-            case (RPSMove.ROCK, RPSMove.ROCK):
-                game_string += "It's a draw."
-            case (RPSMove.ROCK, RPSMove.PAPER):
-                game_string += f"{opponent.mention} wins!"
-            case (RPSMove.ROCK, RPSMove.SCISSORS):
-                game_string += f"{ctx.author.mention} wins!"
-            case (RPSMove.PAPER, RPSMove.ROCK):
-                game_string += f"{ctx.author.mention} wins!"
-            case (RPSMove.PAPER, RPSMove.PAPER):
-                game_string += "It's a draw."
-            case (RPSMove.PAPER, RPSMove.SCISSORS):
-                game_string += f"{opponent.mention} wins!"
-            case (RPSMove.SCISSORS, RPSMove.ROCK):
-                game_string += f"{opponent.mention} wins!"
-            case (RPSMove.SCISSORS, RPSMove.PAPER):
-                game_string += f"{ctx.author.mention} wins!"
-            case (RPSMove.SCISSORS, RPSMove.SCISSORS):
-                game_string += "It's a draw."
-        
-        await game_message.edit(game_string)
+            # Opponent selects move
+            opponent_select = RPSSelectView(opponent, timeout=30, disable_on_timeout=True)
+            await ctx.respond(
+                f"{ctx.author.mention} Pick your move! You have 30 seconds.",
+                view=opponent_select,
+            )
+            await opponent_select.wait()
+            if opponent_select.move is None:
+                await ctx.respond(
+                    f"{opponent.mention} took too long to make a move. {ctx.author.mention} wins by default!"
+                )
+                return
+
+            game_string = f"{ctx.author.mention} {opponent.mention} Rock, paper, scissors, shoot!"
+            game_message = await ctx.respond(game_string)
+
+            await asyncio.sleep(2)
+
+            # Updates game string with each player's moves and the result
+            game_string += f"\n\n{ctx.author.mention} "
+            match player_select.move:
+                case RPSMove.ROCK:
+                    game_string += "🪨   "
+                case RPSMove.PAPER:
+                    game_string += "📜   "
+                case RPSMove.SCISSORS:
+                    game_string += "✂️   "
+            match opponent_select.move:
+                case RPSMove.ROCK:
+                    game_string += "🪨 "
+                case RPSMove.PAPER:
+                    game_string += "📜 "
+                case RPSMove.SCISSORS:
+                    game_string += "✂️ "
+            game_string += f"{opponent.mention}\n\n"
+
+            match (player_select.move, opponent_select.move):
+                case (RPSMove.ROCK, RPSMove.ROCK):
+                    game_string += "It's a draw."
+                case (RPSMove.ROCK, RPSMove.PAPER):
+                    game_string += f"{opponent.mention} wins!"
+                    game_is_a_draw = False
+                case (RPSMove.ROCK, RPSMove.SCISSORS):
+                    game_string += f"{ctx.author.mention} wins!"
+                    game_is_a_draw = False
+                case (RPSMove.PAPER, RPSMove.ROCK):
+                    game_string += f"{ctx.author.mention} wins!"
+                    game_is_a_draw = False
+                case (RPSMove.PAPER, RPSMove.PAPER):
+                    game_string += "It's a draw."
+                case (RPSMove.PAPER, RPSMove.SCISSORS):
+                    game_string += f"{opponent.mention} wins!"
+                    game_is_a_draw = False
+                case (RPSMove.SCISSORS, RPSMove.ROCK):
+                    game_string += f"{opponent.mention} wins!"
+                    game_is_a_draw = False
+                case (RPSMove.SCISSORS, RPSMove.PAPER):
+                    game_string += f"{ctx.author.mention} wins!"
+                    game_is_a_draw = False
+                case (RPSMove.SCISSORS, RPSMove.SCISSORS):
+                    game_string += "It's a draw."
+
+            if game_is_a_draw and replay_after_draw:
+                game_string += " Replaying..."
+
+            await game_message.edit(game_string)
+
+            # I wish do-while loops existed
+            if not replay_after_draw:
+                break
+            else:
+                await asyncio.sleep(2)
 
 
 def setup(bot: discord.Bot):
