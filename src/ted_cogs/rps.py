@@ -85,11 +85,13 @@ class RPS(commands.Cog):
     @discord.option(
         "opponent",
         description="Who you want to play against",
+        type=discord.Member,
         required=True,
     )
     @discord.option(
         "replay_after_draw",
         description="Whether another game starts automatically after a draw",
+        type=bool,
         required=False,
         default=True,
     )
