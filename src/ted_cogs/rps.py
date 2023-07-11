@@ -1,6 +1,6 @@
+import asyncio
 from enum import Enum
 
-import asyncio
 import discord
 from discord.ext import commands
 
@@ -78,7 +78,7 @@ class RPSSelectView(discord.ui.View):
 
 
 class RPS(commands.Cog):
-    def __init__(self, bot: discord.Bot):
+    def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
 
     @discord.slash_command(name="rps", description="Challenge someone to rock-paper-scissors!")
@@ -208,5 +208,5 @@ class RPS(commands.Cog):
                 await asyncio.sleep(2)
 
 
-def setup(bot: discord.Bot):
+def setup(bot: discord.Bot) -> None:
     bot.add_cog(RPS(bot))
