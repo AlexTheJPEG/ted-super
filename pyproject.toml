@@ -3,7 +3,7 @@ name = "ted-super"
 version = "0.2.0"
 description = "Add a short description here"
 authors = [
-    { name = "Alex The JPEG", email = "alexthejpeg@gmail.com" }
+    { name = "Alex The JPEG", email = "alexthejpeg@proton.me" }
 ]
 dependencies = ["py-cord~=2.4.1"]
 readme = "README.md"
