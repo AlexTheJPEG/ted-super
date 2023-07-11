@@ -82,6 +82,11 @@ class RPS(commands.Cog):
         self.bot = bot
 
     @discord.slash_command(name="rps", description="Challenge someone to rock-paper-scissors!")
+    @discord.option(
+        "opponent",
+        description="Who you want to play against",
+        required=True,
+    )
     async def rps(self, ctx: discord.ApplicationContext, opponent: discord.Member) -> None:
         # Match request flow
         if opponent == ctx.author:
