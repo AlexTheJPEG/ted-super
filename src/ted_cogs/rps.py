@@ -90,7 +90,7 @@ class RPS(commands.Cog):
     )
     @discord.option(
         "replay_after_draw",
-        description="Whether another game starts automatically after a draw",
+        description="Whether another game starts automatically after a draw (default: true)",
         type=bool,
         required=False,
         default=True,
