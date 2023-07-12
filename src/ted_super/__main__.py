@@ -1,7 +1,8 @@
 import discord
 from ted_utils.files import load_bot_settings, print_splash
 
-bot = discord.Bot()
+intents = discord.Intents.default() | discord.Intents.message_content
+bot = discord.Bot(intents=intents)
 settings = load_bot_settings()
 
 

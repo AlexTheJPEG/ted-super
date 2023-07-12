@@ -1,3 +1,6 @@
+import random
+from asyncio import TimeoutError
+
 import discord
 from discord.ext import commands
 
@@ -16,7 +19,21 @@ class GuessingGame(commands.Cog):
         max_value=1_000_000,
     )
     async def guessinggame(self, ctx: discord.ApplicationContext, max_number: int) -> None:
-        await ctx.respond(max_number)
+        random.randint(1, max_number)
+
+        await ctx.respond(
+            f"{ctx.author.mention} I'm thinking of a number from 1 to {max_number}...try to guess it! "
+            '(Type "cancel" to cancel this game.)'
+        )
+
+        def is_number(message: discord.Message) -> bool:
+            return message.author == ctx.author and message.content.isdigit()
+
+        try:
+            response: discord.Message = await self.bot.wait_for("message", check=is_number, timeout=30)
+            await response.reply("yep that's a number")
+        except TimeoutError:
+            await ctx.respond("You took too long to guess. Cancelled.")
 
 
 def setup(bot: discord.Bot) -> None:
