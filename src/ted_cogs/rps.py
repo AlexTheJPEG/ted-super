@@ -105,7 +105,7 @@ class RPS(commands.Cog):
         await ctx.respond(
             f"{opponent.mention}, you have been challenged to a rock-paper-scissors match"
             f" by {ctx.author.mention}! " +
-            '(replay after draw is off) ' if not replay_after_draw else '' +
+            ('(replay after draw is off) ' if not replay_after_draw else '') +
             "Do you accept?\n\nYou have 30 seconds to respond.",
             view=rps_request,
         )
