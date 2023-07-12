@@ -139,7 +139,7 @@ class RPS(commands.Cog):
             # Opponent selects move
             opponent_select = RPSSelectView(opponent, timeout=30, disable_on_timeout=True)
             await ctx.respond(
-                f"{ctx.author.mention} Pick your move! You have 30 seconds.",
+                f"{opponent.mention} Pick your move! You have 30 seconds.",
                 view=opponent_select,
             )
             await opponent_select.wait()
