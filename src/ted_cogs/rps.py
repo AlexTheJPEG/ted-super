@@ -1,8 +1,14 @@
 import asyncio
 from enum import Enum
+from random import choice
 
 import discord
 from discord.ext import commands
+
+
+class RPSGame(Enum):
+    PVP = 0
+    PVB = 1
 
 
 class RPSStatus(Enum):
@@ -101,23 +107,30 @@ class RPS(commands.Cog):
             await ctx.respond("You can't challenge yourself!", ephemeral=True)
             return
 
-        rps_request = RPSRequestView(opponent, timeout=30, disable_on_timeout=True)
-        await ctx.respond(
-            f"{opponent.mention}, you have been challenged to a rock-paper-scissors match"
-            f" by {ctx.author.mention}! Do you accept?"
-            + ("\n**(auto-replay after draw is off)**" if not replay_after_draw else "") +
-            "\n\nYou have 30 seconds to respond.",
-            view=rps_request,
-        )
-        await rps_request.wait()
+        if opponent == self.bot.user:
+            game_type = RPSGame.PVB
 
-        match rps_request.status:
-            case RPSStatus.WAITING:
-                await ctx.respond(f"{opponent.mention} took too long to respond. Cancelled.")
-                return
-            case RPSStatus.DECLINED:
-                await ctx.respond(f"{opponent.mention} declined the match.")
-                return
+            await ctx.respond("Alright, I accept your challenge!")
+        else:
+            game_type = RPSGame.PVP
+
+            rps_request = RPSRequestView(opponent, timeout=30, disable_on_timeout=True)
+            await ctx.respond(
+                f"{opponent.mention}, you have been challenged to a rock-paper-scissors match"
+                f" by {ctx.author.mention}! Do you accept?"
+                + ("\n**(auto-replay after draw is off)**" if not replay_after_draw else "") +
+                "\n\nYou have 30 seconds to respond.",
+                view=rps_request,
+            )
+            await rps_request.wait()
+
+            match rps_request.status:
+                case RPSStatus.WAITING:
+                    await ctx.respond(f"{opponent.mention} took too long to respond. Cancelled.")
+                    return
+                case RPSStatus.DECLINED:
+                    await ctx.respond(f"{opponent.mention} declined the match.")
+                    return
 
         # Game flow
         game_is_a_draw = True
@@ -131,25 +144,36 @@ class RPS(commands.Cog):
             )
             await player_select.wait()
             if player_select.move is None:
-                await ctx.respond(
-                    f"{ctx.author.mention} took too long to make a move. {opponent.mention} wins by default!"
-                )
+                if game_type == RPSGame.PVP:
+                    await ctx.respond(
+                        f"{ctx.author.mention} took too long to make a move. {opponent.mention} wins by default!"
+                    )
+                else:
+                    await ctx.respond(
+                        "You took too long to make a move. I win by default!"
+                    )
                 return
 
-            # Opponent selects move
-            opponent_select = RPSSelectView(opponent, timeout=30, disable_on_timeout=True)
-            await ctx.respond(
-                f"{opponent.mention} Pick your move! You have 30 seconds.",
-                view=opponent_select,
-            )
-            await opponent_select.wait()
-            if opponent_select.move is None:
+            if game_type == RPSGame.PVP:
+                # Opponent selects move
+                opponent_select = RPSSelectView(opponent, timeout=30, disable_on_timeout=True)
                 await ctx.respond(
-                    f"{opponent.mention} took too long to make a move. {ctx.author.mention} wins by default!"
+                    f"{opponent.mention} Pick your move! You have 30 seconds.",
+                    view=opponent_select,
                 )
-                return
+                await opponent_select.wait()
+                if opponent_select.move is None:
+                    await ctx.respond(
+                        f"{opponent.mention} took too long to make a move. {ctx.author.mention} wins by default!"
+                    )
+                    return
+            else:
+                opponent_select = choice([RPSMove.ROCK, RPSMove.PAPER, RPSMove.SCISSORS])
 
-            game_string = f"{ctx.author.mention} {opponent.mention} Rock, paper, scissors, shoot!"
+            if game_type == RPSGame.PVP:
+                game_string = f"{ctx.author.mention} {opponent.mention} Rock, paper, scissors, shoot!"
+            else:
+                game_string = f"{ctx.author.mention} Rock, paper, scissors, shoot!"
             game_message = await ctx.respond(game_string)
 
             await asyncio.sleep(2)
@@ -163,38 +187,64 @@ class RPS(commands.Cog):
                     game_string += "📜   "
                 case RPSMove.SCISSORS:
                     game_string += "✂️   "
-            match opponent_select.move:
+            match opponent_select.move if game_type == RPSGame.PVP else opponent_select:
                 case RPSMove.ROCK:
                     game_string += "🪨 "
                 case RPSMove.PAPER:
                     game_string += "📜 "
                 case RPSMove.SCISSORS:
                     game_string += "✂️ "
-            game_string += f"{opponent.mention}\n\n"
+            game_string += f"{opponent.mention if game_type == RPSGame.PVP else 'Me'}\n\n"
 
-            match (player_select.move, opponent_select.move):
+            match (player_select.move, opponent_select.move if game_type == RPSGame.PVP else opponent_select):
                 case (RPSMove.ROCK, RPSMove.ROCK):
                     game_string += "It's a draw."
+
                 case (RPSMove.ROCK, RPSMove.PAPER):
-                    game_string += f"{opponent.mention} wins!"
+                    if game_type == RPSGame.PVP:
+                        game_string += f"{opponent.mention} wins!"
+                    else:
+                        game_string += "I win!"
                     game_is_a_draw = False
+
                 case (RPSMove.ROCK, RPSMove.SCISSORS):
-                    game_string += f"{ctx.author.mention} wins!"
+                    if game_type == RPSGame.PVP:
+                        game_string += f"{ctx.author.mention} wins!"
+                    else:
+                        game_string += "You win."
                     game_is_a_draw = False
+
                 case (RPSMove.PAPER, RPSMove.ROCK):
-                    game_string += f"{ctx.author.mention} wins!"
+                    if game_type == RPSGame.PVP:
+                        game_string += f"{ctx.author.mention} wins!"
+                    else:
+                        game_string += "You win."
                     game_is_a_draw = False
+
                 case (RPSMove.PAPER, RPSMove.PAPER):
                     game_string += "It's a draw."
+
                 case (RPSMove.PAPER, RPSMove.SCISSORS):
-                    game_string += f"{opponent.mention} wins!"
+                    if game_type == RPSGame.PVP:
+                        game_string += f"{opponent.mention} wins!"
+                    else:
+                        game_string += "I win!"
                     game_is_a_draw = False
+
                 case (RPSMove.SCISSORS, RPSMove.ROCK):
-                    game_string += f"{opponent.mention} wins!"
+                    if game_type == RPSGame.PVP:
+                        game_string += f"{opponent.mention} wins!"
+                    else:
+                        game_string += "I win!"
                     game_is_a_draw = False
+
                 case (RPSMove.SCISSORS, RPSMove.PAPER):
-                    game_string += f"{ctx.author.mention} wins!"
+                    if game_type == RPSGame.PVP:
+                        game_string += f"{ctx.author.mention} wins!"
+                    else:
+                        game_string += "You win."
                     game_is_a_draw = False
+
                 case (RPSMove.SCISSORS, RPSMove.SCISSORS):
                     game_string += "It's a draw."
 
