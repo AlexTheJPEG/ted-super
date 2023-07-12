@@ -19,19 +19,36 @@ class GuessingGame(commands.Cog):
         max_value=1_000_000,
     )
     async def guessinggame(self, ctx: discord.ApplicationContext, max_number: int) -> None:
-        random.randint(1, max_number)
+        number = random.randint(1, max_number)
+        total_guesses = 0
 
         await ctx.respond(
             f"{ctx.author.mention} I'm thinking of a number from 1 to {max_number}...try to guess it! "
-            '(Type "cancel" to cancel this game.)'
+            '(Type "cancel" at any time to cancel this game.)'
         )
 
-        def is_number(message: discord.Message) -> bool:
-            return message.author == ctx.author and message.content.isdigit()
+        def check(message: discord.Message) -> bool:
+            return message.author == ctx.author and (message.content.isdigit() or message.content == "cancel")
 
         try:
-            response: discord.Message = await self.bot.wait_for("message", check=is_number, timeout=30)
-            await response.reply("yep that's a number")
+            while True:
+                response: discord.Message = await self.bot.wait_for("message", check=check, timeout=30)
+
+                if response.content == "cancel":
+                    await response.reply("Cancelled.")
+                    break
+
+                guess = int(response.content)
+                total_guesses += 1
+                if not 1 <= guess <= max_number:
+                    await response.reply(f"That number isn't between 1 and {number}...try again!")
+                elif guess < number:
+                    await response.reply("My number is higher. Try again!")
+                elif guess > number:
+                    await response.reply("My number is lower. Try again!")
+                else:
+                    await response.reply(f"You got it! It took you {total_guesses} guesses!")
+                    break
         except TimeoutError:
             await ctx.respond("You took too long to guess. Cancelled.")
 
