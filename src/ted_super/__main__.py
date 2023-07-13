@@ -15,6 +15,7 @@ cogs_list = (
     "ping",
     "rps",
     "guessinggame",
+    "trivia",
 )
 for cog in cogs_list:
     bot.load_extension(f"ted_cogs.{cog}")
