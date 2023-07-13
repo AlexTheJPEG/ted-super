@@ -24,7 +24,7 @@ class GuessingGame(commands.Cog):
         type=bool,
         default=False,
     )
-    async def guessinggame(self, ctx: discord.ApplicationContext, max_number: int, public: False) -> None:
+    async def guessinggame(self, ctx: discord.ApplicationContext, max_number: int, public: bool) -> None:
         number = random.randint(1, max_number)
         total_guesses = 0
 
@@ -38,7 +38,6 @@ class GuessingGame(commands.Cog):
                 f"{ctx.author.mention} I'm thinking of a number from 1 to {max_number}...try to guess it! "
                 '(Type "cancel" at any time to cancel this game.)'
             )
-
 
         def check(message: discord.Message) -> bool:
             if public:
