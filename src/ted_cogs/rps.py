@@ -118,8 +118,8 @@ class RPS(commands.Cog):
             await ctx.respond(
                 f"{opponent.mention}, you have been challenged to a rock-paper-scissors match"
                 f" by {ctx.author.mention}! Do you accept?"
-                + ("\n**(auto-replay after draw is off)**" if not replay_after_draw else "") +
-                "\n\nYou have 30 seconds to respond.",
+                + ("\n**(auto-replay after draw is off)**" if not replay_after_draw else "")
+                + "\n\nYou have 30 seconds to respond.",
                 view=rps_request,
             )
             await rps_request.wait()
@@ -149,9 +149,7 @@ class RPS(commands.Cog):
                         f"{ctx.author.mention} took too long to make a move. {opponent.mention} wins by default!"
                     )
                 else:
-                    await ctx.respond(
-                        "You took too long to make a move. I win by default!"
-                    )
+                    await ctx.respond("You took too long to make a move. I win by default!")
                 return
             player_move = player_select.move
 
