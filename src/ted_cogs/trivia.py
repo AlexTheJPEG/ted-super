@@ -8,16 +8,17 @@ from ted_utils.web import HEADERS
 
 
 class TriviaAnswer(Enum):
-    A = 1
-    B = 2
-    C = 3
-    D = 4
+    NO_ANSWER = -1
+    A = 0
+    B = 1
+    C = 2
+    D = 3
 
 
 class TriviaView(discord.ui.View):
     def __init__(self, player: discord.Member | discord.User, *args, **kwargs) -> None:
         self.player = player
-        self.answer = None
+        self.answer = TriviaAnswer.NO_ANSWER
         super().__init__(*args, **kwargs)
 
     async def button_check(self, answer: TriviaAnswer, interaction: discord.Interaction) -> None:
@@ -57,11 +58,10 @@ class Trivia(commands.Cog):
     @discord.slash_command(name="trivia", description="Answer some trivia questions!")
     async def trivia(self, ctx: discord.ApplicationContext) -> None:
         # Get a random question
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://the-trivia-api.com/api/questions?limit=1&region=US", headers=HEADERS
-            ) as response:
-                question_json = (await response.json())[0]
+        async with aiohttp.ClientSession() as session, session.get(
+            "https://the-trivia-api.com/api/questions?limit=1&region=US", headers=HEADERS
+        ) as response:
+            question_json = (await response.json())[0]
 
         category = question_json["category"]
         question = question_json["question"]
@@ -70,10 +70,10 @@ class Trivia(commands.Cog):
         correct_answer = question_json["correctAnswer"].strip()
         answers = [answer.strip() for answer in question_json["incorrectAnswers"] + [correct_answer]]
         shuffle(answers)
+        correct_answer_index = answers.index(correct_answer)
 
         # Correspond each answer with a letter
         answers_with_letters = {chr(97 + i): answers[i] for i in range(len(answers))}
-        chr(97 + answers.index(correct_answer))
 
         answers_list = [f":regional_indicator_{k}: {v}" for k, v in answers_with_letters.items()]
         answers_string = "\n".join(answers_list)
@@ -82,10 +82,16 @@ class Trivia(commands.Cog):
         trivia_view = TriviaView(ctx.author, timeout=30, disable_on_timeout=True)
         await ctx.respond("\n\n".join(trivia_string), view=trivia_view)
         await trivia_view.wait()
-        if trivia_view.answer is None:
+        if trivia_view.answer == TriviaAnswer.NO_ANSWER:
             await ctx.respond("You took too long to answer. Cancelled.")
             return
-        await ctx.respond(trivia_view.answer) 
+
+        if trivia_view.answer.value == correct_answer_index:
+            await ctx.respond(f"{ctx.author.mention} That is correct!")
+        else:
+            await ctx.respond(
+                f"{ctx.author.mention} That is incorrect. The answer is {answers_list[correct_answer_index]}"
+            )
 
 
 def setup(bot: discord.Bot) -> None:
