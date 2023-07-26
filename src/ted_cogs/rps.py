@@ -43,16 +43,16 @@ class RPSRequestView(discord.ui.View):
         self.stop()
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.green, emoji="👍")
-    async def accept_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def accept_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(RPSStatus.ACCEPTED, interaction)
 
     @discord.ui.button(label="Decline", style=discord.ButtonStyle.red, emoji="👎")
-    async def decline_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def decline_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(RPSStatus.DECLINED, interaction)
 
 
 class RPSSelectView(discord.ui.View):
-    def __init__(self, player: discord.Member, *args, **kwargs) -> None:
+    def __init__(self, player: discord.Member | discord.User, *args, **kwargs) -> None:
         self.player = player
         self.move = None
         super().__init__(*args, **kwargs)
@@ -71,15 +71,15 @@ class RPSSelectView(discord.ui.View):
         self.stop()
 
     @discord.ui.button(label="Rock", style=discord.ButtonStyle.gray, emoji="🪨")
-    async def rock_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def rock_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(RPSMove.ROCK, interaction)
 
     @discord.ui.button(label="Paper", style=discord.ButtonStyle.gray, emoji="📜")
-    async def paper_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def paper_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(RPSMove.PAPER, interaction)
 
     @discord.ui.button(label="Scissors", style=discord.ButtonStyle.gray, emoji="✂️")
-    async def scissors_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def scissors_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(RPSMove.SCISSORS, interaction)
 
 
@@ -153,6 +153,7 @@ class RPS(commands.Cog):
                         "You took too long to make a move. I win by default!"
                     )
                 return
+            player_move = player_select.move
 
             if game_type == RPSGame.PVP:
                 # Opponent selects move
@@ -167,8 +168,9 @@ class RPS(commands.Cog):
                         f"{opponent.mention} took too long to make a move. {ctx.author.mention} wins by default!"
                     )
                     return
+                opponent_move = opponent_select.move
             else:
-                opponent_select = choice([RPSMove.ROCK, RPSMove.PAPER, RPSMove.SCISSORS])
+                opponent_move = choice([RPSMove.ROCK, RPSMove.PAPER, RPSMove.SCISSORS])
 
             if game_type == RPSGame.PVP:
                 game_string = f"{ctx.author.mention} {opponent.mention} Rock, paper, scissors, shoot!"
@@ -180,14 +182,14 @@ class RPS(commands.Cog):
 
             # Updates game string with each player's moves and the result
             game_string += f"\n\n{ctx.author.mention} "
-            match player_select.move:
+            match player_move:
                 case RPSMove.ROCK:
                     game_string += "🪨   "
                 case RPSMove.PAPER:
                     game_string += "📜   "
                 case RPSMove.SCISSORS:
                     game_string += "✂️   "
-            match opponent_select.move if game_type == RPSGame.PVP else opponent_select:
+            match opponent_move:
                 case RPSMove.ROCK:
                     game_string += "🪨 "
                 case RPSMove.PAPER:
@@ -196,7 +198,7 @@ class RPS(commands.Cog):
                     game_string += "✂️ "
             game_string += f"{opponent.mention if game_type == RPSGame.PVP else 'Me'}\n\n"
 
-            match (player_select.move, opponent_select.move if game_type == RPSGame.PVP else opponent_select):
+            match (player_move, opponent_move):
                 case (RPSMove.ROCK, RPSMove.ROCK):
                     game_string += "It's a draw."
 
@@ -251,7 +253,7 @@ class RPS(commands.Cog):
             if game_is_a_draw and replay_after_draw:
                 game_string += " Replaying..."
 
-            await game_message.edit(game_string)
+            await game_message.edit(game_string)  # type: ignore
 
             # I wish do-while loops existed
             if not replay_after_draw:
