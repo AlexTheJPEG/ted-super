@@ -15,7 +15,7 @@ class TriviaAnswer(Enum):
 
 
 class TriviaView(discord.ui.View):
-    def __init__(self, player: discord.Member, *args, **kwargs) -> None:
+    def __init__(self, player: discord.Member | discord.User, *args, **kwargs) -> None:
         self.player = player
         self.answer = None
         super().__init__(*args, **kwargs)
@@ -34,19 +34,19 @@ class TriviaView(discord.ui.View):
         self.stop()
 
     @discord.ui.button(label="A", style=discord.ButtonStyle.primary)
-    async def a_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def a_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(TriviaAnswer.A, interaction)
 
     @discord.ui.button(label="B", style=discord.ButtonStyle.primary)
-    async def b_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def b_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(TriviaAnswer.B, interaction)
 
     @discord.ui.button(label="C", style=discord.ButtonStyle.primary)
-    async def c_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def c_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(TriviaAnswer.C, interaction)
 
     @discord.ui.button(label="D", style=discord.ButtonStyle.primary)
-    async def d_button_callback(self, button: discord.Button, interaction: discord.Interaction) -> None:
+    async def d_button_callback(self, _: discord.Button, interaction: discord.Interaction) -> None:
         await self.button_check(TriviaAnswer.D, interaction)
 
 
