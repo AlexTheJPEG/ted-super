@@ -21,6 +21,6 @@ mypy-extensions==1.0.0
 packaging==23.1
 pathspec==0.11.1
 platformdirs==3.5.1
-py-cord==2.4.1
+py-cord @ git+https://github.com/Pycord-Development/pycord.git
 ruff==0.0.269
 yarl==1.9.2
