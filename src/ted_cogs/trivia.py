@@ -16,13 +16,14 @@ class TriviaAnswer(Enum):
 
 
 class TriviaView(discord.ui.View):
-    def __init__(self, player: discord.Member | discord.User, *args, **kwargs) -> None:
+    def __init__(self, player: discord.Member | discord.User, public: bool, *args, **kwargs) -> None:
         self.player = player
         self.answer = TriviaAnswer.NO_ANSWER
+        self.public = public
         super().__init__(*args, **kwargs)
 
     async def button_check(self, answer: TriviaAnswer, interaction: discord.Interaction) -> None:
-        if interaction.user != self.player:
+        if not self.public and interaction.user != self.player:
             await interaction.response.send_message(
                 f"Hey! These buttons are for {self.player.mention} only!",
                 ephemeral=True,
@@ -30,6 +31,7 @@ class TriviaView(discord.ui.View):
             return
 
         self.answer = answer
+        self.answerer = interaction.user
         self.disable_all_items()
         await interaction.response.edit_message(view=self)
         self.stop()
@@ -56,7 +58,13 @@ class Trivia(commands.Cog):
         self.bot = bot
 
     @discord.slash_command(name="trivia", description="Answer some trivia questions!")
-    async def trivia(self, ctx: discord.ApplicationContext) -> None:
+    @discord.option(
+        "public",
+        description="Can anyone try to answer? (default: false)",
+        type=bool,
+        default=False,
+    )
+    async def trivia(self, ctx: discord.ApplicationContext, public: bool) -> None:
         # Get a random question
         async with aiohttp.ClientSession() as session, session.get(
             "https://the-trivia-api.com/api/questions?limit=1&region=US", headers=HEADERS
@@ -77,10 +85,11 @@ class Trivia(commands.Cog):
 
         answers_list = [f":regional_indicator_{k}: {v}" for k, v in answers_with_letters.items()]
         answers_string = "\n".join(answers_list)
-        trivia_string = [f"**Category: {category}**", question, answers_string]
+        public_string = "\nAnyone can answer this question!" if public else ""
+        trivia_string = [f"**Category: {category}{public_string}**", question, answers_string]
 
         # Wait for an answer
-        trivia_view = TriviaView(ctx.author, timeout=30, disable_on_timeout=True)
+        trivia_view = TriviaView(ctx.author, public, timeout=30, disable_on_timeout=True)
         trivia_message = await ctx.respond("\n\n".join(trivia_string), view=trivia_view)
         await trivia_view.wait()
         if trivia_view.answer == TriviaAnswer.NO_ANSWER:
@@ -89,16 +98,16 @@ class Trivia(commands.Cog):
 
         # Show correct / incorrect answer
         if trivia_view.answer.value == correct_answer_index:
-            await ctx.respond(f"{ctx.author.mention} That is correct!")
+            await ctx.respond(f"{trivia_view.answerer.mention} That is correct!")
         else:
             await ctx.respond(
-                f"{ctx.author.mention} That is incorrect. The answer is {answers_list[correct_answer_index]}"
+                f"{trivia_view.answerer.mention} That is incorrect. The answer is {answers_list[correct_answer_index]}"
             )
             answers_list[trivia_view.answer.value] = f":x: {answers[trivia_view.answer.value]}"
 
         answers_list[correct_answer_index] = f":white_check_mark: {answers[correct_answer_index]}"
         answers_string = "\n".join(answers_list)
-        trivia_string = [f"**Category: {category}**", question, answers_string]
+        trivia_string = [f"**Category: {category}{public_string}**", question, answers_string]
         await trivia_message.edit(content="\n\n".join(trivia_string))
 
 
