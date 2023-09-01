@@ -14,3 +14,6 @@ bot_settings.toml
 
 # Ruff cache
 .ruff_cache/
+
+# Mypy cache
+.mypy_cache/
