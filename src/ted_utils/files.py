@@ -1,4 +1,5 @@
 from pathlib import Path
+from random import choice
 
 import tomllib
 
@@ -23,7 +24,8 @@ def print_splash() -> None:
         for line in lines[:5]:
             print(line)
 
-        splash_text = "TODO: splash text"
+        with Path("splash_texts.txt").open() as splash_texts:
+            splash_text = choice(splash_texts.read().splitlines())
         print(lines[5].format(splash_text.center(42, " ")))
 
         for line in lines[6:10]:
