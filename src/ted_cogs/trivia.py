@@ -79,19 +79,27 @@ class Trivia(commands.Cog):
         answers_string = "\n".join(answers_list)
         trivia_string = [f"**Category: {category}**", question, answers_string]
 
+        # Wait for an answer
         trivia_view = TriviaView(ctx.author, timeout=30, disable_on_timeout=True)
-        await ctx.respond("\n\n".join(trivia_string), view=trivia_view)
+        trivia_message = await ctx.respond("\n\n".join(trivia_string), view=trivia_view)
         await trivia_view.wait()
         if trivia_view.answer == TriviaAnswer.NO_ANSWER:
             await ctx.respond("You took too long to answer. Cancelled.")
             return
 
+        # Show correct / incorrect answer
         if trivia_view.answer.value == correct_answer_index:
             await ctx.respond(f"{ctx.author.mention} That is correct!")
         else:
             await ctx.respond(
                 f"{ctx.author.mention} That is incorrect. The answer is {answers_list[correct_answer_index]}"
             )
+            answers_list[trivia_view.answer.value] = f":x: {answers[trivia_view.answer.value]}"
+
+        answers_list[correct_answer_index] = f":white_check_mark: {answers[correct_answer_index]}"
+        answers_string = "\n".join(answers_list)
+        trivia_string = [f"**Category: {category}**", question, answers_string]
+        await trivia_message.edit(content="\n\n".join(trivia_string))
 
 
 def setup(bot: discord.Bot) -> None:
