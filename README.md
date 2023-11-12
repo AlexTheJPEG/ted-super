@@ -19,6 +19,6 @@ The file should contain at least the settings below. An example file has also be
 token = "your token here"
 ```
 
-Dependencies are handled by [Rye](https://github.com/mitsuhiko/rye), a new and experimental Python package management solution. Install Rye on your machine by following the instructions in the linked repo, then `cd` into the root of the project directory and run `rye sync`. This will install all of the dependencies in a `.venv` folder, which you can add as the project interpreter in VSCode or a Python IDE.
+Dependencies are handled by [Poetry](https://python-poetry.org/). Install Poetry on your machine if you haven't already, then simply run `poetry install` in the project directory.
 
-To run the bot, `cd` into the root of the project directory and run `rye run python -m ted_super`. Or, assuming you have `~/.rye/shims` in your `PATH`, you can simply run `python -m ted_super`. If everything has worked, you'll be greeted by an ASCII Ted!
+To run the bot, `cd` into the root of the project directory and run `poetry run python -m ted_super` (or activate the virtual environment created by Poetry using `poetry shell` and run `python -m ted_super` in the project directory). If everything has worked, you'll be greeted by an ASCII Ted!
