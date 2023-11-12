@@ -12,7 +12,7 @@ def load_bot_settings() -> dict:
 def get_bot_version() -> str:
     with Path("pyproject.toml").open("rb") as project:
         toml = tomllib.load(project)
-        return toml["project"]["version"]
+        return toml["tool"]["poetry"]["version"]
 
 
 def print_splash() -> None:
