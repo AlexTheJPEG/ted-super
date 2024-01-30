@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-py-cord-dev = "^2.5.0rc5"
+py-cord = "^2.4.1"
 
 
 [tool.poetry.group.dev.dependencies]
